@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.dependencies import init_repositories
 from app.routes import appointments, coaches, dashboard, students
-from app.store import seed_data
-
 
 app = FastAPI(title="Driving School Booking API", version="1.0.0")
 
@@ -18,7 +17,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup() -> None:
-    seed_data()
+    init_repositories()
 
 
 @app.get("/api/health")

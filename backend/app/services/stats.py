@@ -1,16 +1,20 @@
 from app.models import AppointmentStatus
+from app.repositories.base import AppointmentRepository, StudentRepository
 from app.schemas import LessonStats
-from app.store import appointments, students
 
 
 def _hours(start, end) -> float:
     return round((end - start).total_seconds() / 3600, 1)
 
 
-def lesson_stats() -> list[LessonStats]:
+def lesson_stats(
+    student_repo: StudentRepository,
+    appointment_repo: AppointmentRepository,
+) -> list[LessonStats]:
     result: list[LessonStats] = []
-    for student in students.values():
-        student_appointments = [item for item in appointments.values() if item.student_id == student.id]
+    students = student_repo.list_all()
+    for student in students:
+        student_appointments = appointment_repo.list_by_student(student.id)
         completed_hours = sum(
             _hours(item.start_time, item.end_time)
             for item in student_appointments
