@@ -24,10 +24,10 @@ class MemoryStudentRepository(StudentRepository):
         self._students[student.id] = student
         return student
 
-    def update_remaining_hours(self, student_id: int, hours: float) -> Student | None:
+    def update_remaining_minutes(self, student_id: int, minutes: int) -> Student | None:
         student = self._students.get(student_id)
         if student:
-            student.remaining_hours = hours
+            student.remaining_minutes = minutes
             self._students[student_id] = student
             return student
         return None
@@ -139,8 +139,8 @@ def seed_demo_data(
     if student_repo.list_all() or coach_repo.list_all() or appointment_repo.list_all():
         return
 
-    s1 = Student(id=student_repo.next_id(), name="张小雨", phone="13800000001", remaining_hours=18)
-    s2 = Student(id=student_repo.next_id(), name="李明", phone="13800000002", remaining_hours=12)
+    s1 = Student(id=student_repo.next_id(), name="张小雨", phone="13800000001", remaining_minutes=1080)
+    s2 = Student(id=student_repo.next_id(), name="李明", phone="13800000002", remaining_minutes=720)
     student_repo.add(s1)
     student_repo.add(s2)
 

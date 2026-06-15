@@ -18,7 +18,7 @@ class StudentRepository(ABC):
         ...
 
     @abstractmethod
-    def update_remaining_hours(self, student_id: int, hours: float) -> Student | None:
+    def update_remaining_minutes(self, student_id: int, minutes: int) -> Student | None:
         ...
 
     @abstractmethod

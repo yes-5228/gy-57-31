@@ -1,5 +1,10 @@
 from datetime import datetime
 
 
-def calculate_duration_hours(start: datetime, end: datetime) -> float:
-    return round((end - start).total_seconds() / 3600, 1)
+def duration_to_minutes(start: datetime, end: datetime) -> int:
+    delta = end - start
+    return int(delta.total_seconds() // 60)
+
+
+def minutes_to_hours(minutes: int) -> float:
+    return round(minutes / 60, 2)

@@ -10,7 +10,7 @@ from app.repositories.base import (
     StudentRepository,
 )
 from app.schemas import AppointmentCreate, AppointmentRead
-from app.utils import calculate_duration_hours
+from app.utils import duration_to_minutes
 
 
 def appointment_to_read(
@@ -69,6 +69,13 @@ def create_appointment(
     if start_time <= datetime.now():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cannot book a past time slot")
 
+    duration_minutes = duration_to_minutes(start_time, end_time)
+    if duration_minutes <= 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Appointment duration must be positive")
+
+    if student.remaining_minutes < duration_minutes:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Student does not have enough remaining hours")
+
     cancel_rule = cancel_rule_repo.get()
     active_count = appointment_repo.count_active_by_student(payload.student_id)
     if active_count >= cancel_rule.max_active_bookings_per_student:
@@ -76,10 +83,6 @@ def create_appointment(
 
     if appointment_repo.has_conflict(payload.coach_id, start_time, end_time):
         raise HTTPException(status.HTTP_409_CONFLICT, "Coach already has a booking in this time slot")
-
-    duration_hours = (end_time - start_time).total_seconds() / 3600
-    if student.remaining_hours < duration_hours:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Student does not have enough remaining hours")
 
     appointment = Appointment(
         id=appointment_repo.next_id(),
@@ -91,9 +94,9 @@ def create_appointment(
     )
     appointment_repo.add(appointment)
 
-    student_repo.update_remaining_hours(
+    student_repo.update_remaining_minutes(
         payload.student_id,
-        round(student.remaining_hours - duration_hours, 1),
+        student.remaining_minutes - duration_minutes,
     )
 
     return appointment_to_read(appointment, student_repo, coach_repo)
@@ -130,13 +133,14 @@ def cancel_appointment(
             f"Appointments must be cancelled at least {cancel_rule.min_hours_before_start} hours in advance",
         )
 
-    duration_hours = calculate_duration_hours(appointment.start_time, appointment.end_time)
-    student = student_repo.get_by_id(appointment.student_id)
-    if student and appointment.status == AppointmentStatus.booked:
-        student_repo.update_remaining_hours(
-            appointment.student_id,
-            round(student.remaining_hours + duration_hours, 1),
-        )
+    if appointment.status == AppointmentStatus.booked:
+        duration_minutes = duration_to_minutes(appointment.start_time, appointment.end_time)
+        student = student_repo.get_by_id(appointment.student_id)
+        if student:
+            student_repo.update_remaining_minutes(
+                appointment.student_id,
+                student.remaining_minutes + duration_minutes,
+            )
 
     appointment.status = AppointmentStatus.cancelled
     appointment.cancelled_at = datetime.now()
