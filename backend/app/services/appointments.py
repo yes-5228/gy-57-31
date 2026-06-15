@@ -129,6 +129,14 @@ def cancel_appointment(
             f"Appointments must be cancelled at least {cancel_rule.min_hours_before_start} hours in advance",
         )
 
+    duration_hours = (appointment.end_time - appointment.start_time).total_seconds() / 3600
+    student = student_repo.get_by_id(appointment.student_id)
+    if student and appointment.status == AppointmentStatus.booked:
+        student_repo.update_remaining_hours(
+            appointment.student_id,
+            student.remaining_hours + int(duration_hours),
+        )
+
     appointment.status = AppointmentStatus.cancelled
     appointment.cancelled_at = datetime.now()
     appointment.cancel_reason = reason
