@@ -10,6 +10,7 @@ from app.repositories.base import (
     StudentRepository,
 )
 from app.schemas import AppointmentCreate, AppointmentRead
+from app.utils import calculate_duration_hours
 
 
 def appointment_to_read(
@@ -92,7 +93,7 @@ def create_appointment(
 
     student_repo.update_remaining_hours(
         payload.student_id,
-        student.remaining_hours - int(duration_hours),
+        round(student.remaining_hours - duration_hours, 1),
     )
 
     return appointment_to_read(appointment, student_repo, coach_repo)
@@ -129,12 +130,12 @@ def cancel_appointment(
             f"Appointments must be cancelled at least {cancel_rule.min_hours_before_start} hours in advance",
         )
 
-    duration_hours = (appointment.end_time - appointment.start_time).total_seconds() / 3600
+    duration_hours = calculate_duration_hours(appointment.start_time, appointment.end_time)
     student = student_repo.get_by_id(appointment.student_id)
     if student and appointment.status == AppointmentStatus.booked:
         student_repo.update_remaining_hours(
             appointment.student_id,
-            student.remaining_hours + int(duration_hours),
+            round(student.remaining_hours + duration_hours, 1),
         )
 
     appointment.status = AppointmentStatus.cancelled

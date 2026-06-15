@@ -1,10 +1,7 @@
 from app.models import AppointmentStatus
 from app.repositories.base import AppointmentRepository, StudentRepository
 from app.schemas import LessonStats
-
-
-def _hours(start, end) -> float:
-    return round((end - start).total_seconds() / 3600, 1)
+from app.utils import calculate_duration_hours
 
 
 def lesson_stats(
@@ -16,12 +13,12 @@ def lesson_stats(
     for student in students:
         student_appointments = appointment_repo.list_by_student(student.id)
         completed_hours = sum(
-            _hours(item.start_time, item.end_time)
+            calculate_duration_hours(item.start_time, item.end_time)
             for item in student_appointments
             if item.status == AppointmentStatus.completed
         )
         booked_hours = sum(
-            _hours(item.start_time, item.end_time)
+            calculate_duration_hours(item.start_time, item.end_time)
             for item in student_appointments
             if item.status == AppointmentStatus.booked
         )

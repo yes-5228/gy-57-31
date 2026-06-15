@@ -24,7 +24,7 @@ class MemoryStudentRepository(StudentRepository):
         self._students[student.id] = student
         return student
 
-    def update_remaining_hours(self, student_id: int, hours: int) -> Student | None:
+    def update_remaining_hours(self, student_id: int, hours: float) -> Student | None:
         student = self._students.get(student_id)
         if student:
             student.remaining_hours = hours

@@ -15,6 +15,7 @@ from app.repositories.base import (
 )
 from app.schemas import DashboardSummary, LessonStats
 from app.services.stats import lesson_stats
+from app.utils import calculate_duration_hours
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ def summary(
 ) -> DashboardSummary:
     completed_appointments = appointment_repo.list_by_status(AppointmentStatus.completed)
     completed_hours = sum(
-        (item.end_time - item.start_time).total_seconds() / 3600
+        calculate_duration_hours(item.start_time, item.end_time)
         for item in completed_appointments
     )
     booked_appointments = appointment_repo.list_by_status(AppointmentStatus.booked)
